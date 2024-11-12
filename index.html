@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麻雀データ分析</title>
+  <link rel="stylesheet" href="style.css"> <!-- CSSファイルをリンク -->
+</head>
+<body>
+  <h1>麻雀データ分析</h1>
+  <form id="mahjongForm">
+    <label>和了率 (%)：<input type="number" id="horyuRate" step="0.01"></label><br>
+    <label>放銃率 (%)：<input type="number" id="houjuRate" step="0.01"></label><br>
+    <label>副露率 (%)：<input type="number" id="furoRate" step="0.01"></label><br>
+    <label>立直率 (%)：<input type="number" id="riichiRate" step="0.01"></label><br>
+    <label>ダマ率 (%)：<input type="number" id="damaRate" step="0.01"></label><br>
+    <label>平均打点：<input type="number" id="averageScore" step="0.01"></label><br>
+    <label>平均和了巡数：<input type="number" id="avgHoryuTurn" step="0.01"></label><br>
+    <label>平均放銃打点：<input type="number" id="avgHoujuScore" step="0.01"></label><br>
+    <label>流局時聴牌率 (%)：<input type="number" id="ryukyokuRate" step="0.01"></label><br>
+    <label>立直巡目：<input type="number" id="riichiTurn" step="0.01"></label><br>
+    <label>立直先制率 (%)：<input type="number" id="riichiFirstRate" step="0.01"></label><br>
+    <label>立直追っかけ率 (%)：<input type="number" id="riichiChaseRate" step="0.01"></label><br>
+    <button type="button" onclick="analyze()">分析する</button>
+  </form>
+
+  <h2>分析結果</h2>
+  <p id="result"></p>
+  
+  <!-- 結果を表示するXY座標のキャンバス -->
+  <canvas id="plotCanvas" width="500" height="500" style="border:1px solid #000;"></canvas>
+
+  <script>
+    function standardize(value, mean, stdDev) {
+      return (value - mean) / stdDev;
+    }
+
+    function analyze() {
+      // 入力の取得と標準化
+      const horyuRate = standardize(document.getElementById("horyuRate").value / 100, 0.229400816, 0.01018886);
+      const houjuRate = standardize(document.getElementById("houjuRate").value / 100, 0.11106952, 0.009595166);
+      const furoRate = standardize(document.getElementById("furoRate").value / 100, 0.331713127, 0.037372193);
+      const riichiRate = standardize(document.getElementById("riichiRate").value / 100, 0.182824374, 0.018407074);
+      const damaRate = standardize(document.getElementById("damaRate").value / 100, 0.128029668, 0.029703506);
+      const averageScore = standardize(document.getElementById("averageScore").value, 6454.787778, 235.6563516);
+      const avgHoryuTurn = standardize(document.getElementById("avgHoryuTurn").value, 12.12006667, 0.11553016);
+      const avgHoujuScore = standardize(document.getElementById("avgHoujuScore").value, 5387.771667, 141.1658779);
+      const ryukyokuRate = standardize(document.getElementById("ryukyokuRate").value / 100, 0.421591309, 0.04623791);
+      const riichiTurn = standardize(document.getElementById("riichiTurn").value, 9.298394589, 0.193397116);
+      const riichiFirstRate = standardize(document.getElementById("riichiFirstRate").value / 100, 0.828159779, 0.021060104);
+      const riichiChaseRate = standardize(document.getElementById("riichiChaseRate").value / 100, 0.171840221, 0.021060104);
+
+      // X, Yの計算
+      const X = (
+        horyuRate * -1.166081274 +
+        houjuRate * -0.202381694 +
+        furoRate * -1.258740534 +
+        riichiRate * -0.013917045 +
+        damaRate * 0.708071254 +
+        averageScore * 1.249496931 +
+        avgHoryuTurn * 0.73499073 +
+        avgHoujuScore * -0.231466343 +
+        ryukyokuRate * -0.585817047 +
+        riichiTurn * 0.831715773 +
+        riichiFirstRate * -0.612817769 +
+        riichiChaseRate * 0.546947012
+      );
+
+      const Y = (
+        horyuRate * 0.22551386 +
+        houjuRate * 0.889258806 +
+        furoRate * -0.453560713 +
+        riichiRate * 0.451204072 +
+        damaRate * -1.48123253 +
+        averageScore * -0.194681556 +
+        avgHoryuTurn * 0.531014201 +
+        avgHoujuScore * 0.202878547 +
+        ryukyokuRate * 0.81983416 +
+        riichiTurn * 0.644693651 +
+        riichiFirstRate * -2.393675857 +
+        riichiChaseRate * 0.75875334
+      );
+
+      // SとAの計算
+      const S = Math.sqrt(X * X + Y * Y);
+      const A = Y / X;
+
+      // Tの計算
+      let T;
+      if (S > 12.71) T = "超重度";
+      else if (S > 8.89) T = "重度";
+      else if (S > 3.2) T = "中度";
+      else if (S > 1.47) T = "軽度";
+      else T = "中庸";
+
+      // Uの計算
+      let U;
+      if (A > 1) {
+        U = X > 0 ? "後手反撃型" : "先手躱手型";
+      } else if (A > -0.35) {
+        U = X > 0 ? "門前打点型" : "副露速度型";
+      } else {
+        U = X > 0 ? "鉄壁地蔵型" : "全局参加型";
+      }
+
+      // 結果の表示
+      document.getElementById("result").innerText = `X: ${X.toFixed(2)}, Y: ${Y.toFixed(2)}\nあなたは${T}${U}です。`;
+    
+   　 // XY座標に結果をプロット
+      plotResult(X, Y);
+    }
+
+    function plotResult(X, Y) {
+      const canvas = document.getElementById("plotCanvas");
+      const ctx = canvas.getContext("2d");
+      const originX = canvas.width / 2;
+      const originY = canvas.height / 2;
+      const scale = 10; // 1単位あたりのピクセルサイズ
+
+      // キャンバスをクリア
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // X軸とY軸の描画
+      ctx.strokeStyle = "black";
+      ctx.beginPath();
+      ctx.moveTo(0, originY);
+      ctx.lineTo(canvas.width, originY); // X軸
+      ctx.moveTo(originX, 0);
+      ctx.lineTo(originX, canvas.height); // Y軸
+      ctx.stroke();
+
+      // X軸とY軸の目盛りの描画（5単位ごと）
+      ctx.font = "10px Arial";
+      ctx.fillStyle = "black";
+      for (let i = -25; i <= 25; i += 5) {
+        if (i !== 0) {
+          // X軸の目盛り
+          ctx.fillText(i, originX + i * scale - 5, originY + 15);
+          ctx.beginPath();
+          ctx.moveTo(originX + i * scale, originY - 5);
+          ctx.lineTo(originX + i * scale, originY + 5);
+          ctx.stroke();
+
+          // Y軸の目盛り
+          ctx.fillText(i, originX + 5, originY - i * scale + 3);
+          ctx.beginPath();
+          ctx.moveTo(originX - 5, originY - i * scale);
+          ctx.lineTo(originX + 5, originY - i * scale);
+          ctx.stroke();
+        }
+      } 
+
+      // X=0, Y=X, Y=-0.35Xの線を描画
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = "green";
+
+      // X=0 線
+      ctx.beginPath();
+      ctx.moveTo(originX, 0);
+      ctx.lineTo(originX, canvas.height);
+      ctx.stroke();
+
+      // Y=X 線
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      ctx.lineTo(canvas.width, 0);
+      ctx.stroke();
+
+      // Y=-0.35X 線
+      ctx.beginPath();
+      ctx.moveTo(0, originY - 0.35 * originX);
+      ctx.lineTo(canvas.width, originY + 0.35 * originX);
+      ctx.stroke();
+
+      // 赤色の点をプロット
+      ctx.setLineDash([]);
+      ctx.fillStyle = "red";
+      ctx.beginPath();
+      ctx.arc(originX + X * scale, originY - Y * scale, 8, 0, Math.PI * 2); // 点のサイズを大きく
+      ctx.fill();
+      
+      // 青色の点とラベルをプロット
+      ctx.fillStyle = "blue";
+      bluedataPoints.forEach((point) => {
+        const { label, x, y } = point;
+        // 青色の点を描画
+        ctx.beginPath();
+        ctx.arc(originX + x * scale, originY - y * scale, 3, 0, Math.PI * 2);
+        ctx.fill();
+        // フォントサイズを小さく、細く設定
+  ctx.font = "normal 9px Arial"; // フォントサイズを小さく、細く設定
+        // ラベルを描画
+        ctx.fillText(label, originX + x * scale + 3, originY - y * scale - 1);
+      });
+      
+      // 黒色の点とラベルをプロット
+      ctx.fillStyle = "black";
+      blackdataPoints.forEach((point) => {
+        const { label, x, y } = point;
+        // 黒色の点を描画
+        ctx.beginPath();
+        ctx.arc(originX + x * scale, originY - y * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+          // フォントサイズと太さを設定
+  　　　ctx.font = "bold 14px Arial"; // フォントサイズを大きく、太く設定
+        // ラベルを描画
+        ctx.fillText(label, originX + x * scale + 8, originY - y * scale - 8);
+      });
+    }
+    
+    // 指定された各データ点
+    const bluedataPoints = [
+  { label: "和了率", x: -20.0, y: 3.9 },
+  { label: "放銃率", x: -4.6, y: 20.0 },
+  { label: "副露率", x: -20.0, y: -7.2 },
+  { label: "立直率", x: -0.6, y: 20.0 },
+  { label: "ダマ率", x: 9.6, y: -20.0 },
+  { label: "平均打点", x: 20.0, y: -3.1 },
+  { label: "平均和了巡数", x: 20.0, y: 14.4 },
+  { label: "平均放銃打点", x: -20.0, y: 17.5 },
+  { label: "流局時聴牌率", x: -14.3, y: 20.0 },
+  { label: "立直巡目", x: 20.0, y: 15.5 },
+  { label: "立直先制率", x: -5.1, y: -20.0 },
+  { label: "立直追っかけ率", x: 14.4, y: 20.0 },
+];
+    
+    // 指定された各データ点
+    const blackdataPoints = [
+  { label: "後手反撃型", x: 7, y: 22 },
+  { label: "門前打点型", x: 17, y: 1 },
+  { label: "鉄壁地蔵型", x: 7, y: -25 },
+  { label: "先手躱手型", x: -15, y: -25 },
+  { label: "副露速度型", x: -25, y: -4 },
+  { label: "全局参加型", x: -15, y: 22 },
+];
+  </script>
+</body>
+</html>
