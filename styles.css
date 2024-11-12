@@ -1,0 +1,88 @@
+/* 全体のスタイル */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
+  color: #333;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  color: #4a90e2;
+  font-size: 2em;
+}
+
+h2 {
+  color: #4a90e2;
+  font-size: 1.5em;
+  margin-top: 30px;
+}
+
+/* フォームのスタイル */
+form {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* アイテム間の隙間 */
+}
+
+form label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 1.1em;
+  color: #555;
+}
+
+/* 入力欄のスタイル */
+form input {
+  width: calc(33.33% - 20px); /* 3段分け、間隔を確保 */
+  padding: 10px;
+  margin-top: 5px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+form input:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+form button {
+  background-color: #4a90e2;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1em;
+  margin-top: 15px;
+}
+
+form button:hover {
+  background-color: #357ab7;
+}
+
+/* キャンバスのスタイル */
+canvas {
+  margin-top: 30px;
+  border: 1px solid #000;
+  background-color: #ffffff;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 結果の表示 */
+#result {
+  margin-top: 20px;
+  font-size: 2.0em;
+  color: red;
+  font-weight: bold;
+}
